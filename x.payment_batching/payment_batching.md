@@ -13,7 +13,7 @@ Bitcoin services (mainly exchanges), is available as a built-in feature
 of many wallets (including Bitcoin Core), and should be easy to
 implement in custom wallets and payment-sending solutions.  On the
 downside, use of the technique can lead to temporary unexpected behavior
-for the receivers of payments and may result in a reduction of privacy.
+for the receivers of payments, a possible inability to fee bump, and may result in a reduction of privacy.
 
 ## Transaction size per receiver
 
@@ -112,6 +112,12 @@ the user to accept that their payment will not be sent immediately---it
 will be held for some period of time and then combined with other
 withdrawal requests.
 
+Users will notice this delay because they won't receive a notification
+in their receiving wallet that an unconfirmed transaction is on the way
+until you send the batch containing their payment.  Also by delaying
+sending of their payment, you also delay when it's confirmed (all other
+things being equal, such as feerates).
+
 One mitigation for the problem of delayed gratification is to allow the
 user to choose between an immediate payment and a delayed payment, with
 a different fee provided for each option.  For example:
@@ -179,10 +185,20 @@ only that user is affected.  But if a single receiver of a batched
 payment spends their output to the point where fee bumping becomes
 impossible, all the other receivers of that transaction are also affected.
 
+As of Bitcoin Core 0.18 (April 2019), the limits are[^limits] that a
+group of related unconfirmed transactions may not exceed 101,000 vbytes
+in size, have more than 25 unconfirmed ancestors, or have more than 25
+descendants.  This size limit restricts batches to a maximum size of
+about 3,000 outputs and the descendant limit is easily reached if just a
+tiny percentage of those receiving a large batch respend their confirmed
+outputs.  It's also easy for any of the receivers to deliberately create
+transactions that reach one of these limits and prevent fee bumping if
+they know that you're relying on that capability.
+
 ## Implementation
 
 Payment batching is extremely easy using certain existing wallet
-implementations, such as Bitcoin Core.  Check your software
+implementations, such as using Bitcoin Core's [sendmany][] RPC.  Check your software
 documentation for a function that allows you to send multiple payments.
 
 ```bash
@@ -205,7 +221,7 @@ batched payments larger than this.
 ## Combining batching with other opt-in scaling techniques
 
 Payment batching works well with all the techniques described in this
-guide, but some combinations are especially notable:
+book, but some combinations are especially notable:
 
 ### Changeless transactions
 
@@ -278,14 +294,15 @@ For more information about RBF, see the chapter about [fee bumping][].
 ## Recommendations summary
 
 1. Try to create systems where your users and customers don't expect
-   their payments immediately but are willing to waiting for some time
+   their payments immediately but are willing to wait for some time
    (the longer the better).
 
 2. Use low-feerate consolidations to keep some large inputs available
    for spending.
 
 3. Within each time window, send all payments together in the same
-   transaction.  Ideally, your prior consolidations should allow the
+   transaction.  For example, create an hourly [cronjob][] that sends all pending payments.
+   Ideally, your prior consolidations should allow the
    transaction to contain only a single input.
 
 4. Don't depend on being able to fee bump the batched payments.  This
@@ -295,13 +312,44 @@ For more information about RBF, see the chapter about [fee bumping][].
    Core's `estimatesmartfee` RPC.
 
 5. Optionally, look for opportunities to send the batched payments
-   without a change input.
+   without a change output.
 
 6. Optionally, when you're already planning to attempt an RBF fee bump,
    append as many additional queued payments as possible.  (But remember
    that fee bumps are unreliable.)
 
+## Footnotes
+
+[^limits]:
+    Optech believes that almost all nodes are using the default Bitcoin
+    Core policy for transaction group limits.  However, those defaults
+    may change over time, so the example below provides a command that
+    can be used to find the current limits along with the current
+    values.
+
+    ```bash
+    $ bitcoind -help-debug | grep -A3 -- -limit
+      -limitancestorcount=<n>
+           Do not accept transactions if number of in-mempool ancestors is <n> or
+           more (default: 25)
+
+      -limitancestorsize=<n>
+           Do not accept transactions whose size with all in-mempool ancestors
+           exceeds <n> kilobytes (default: 101)
+
+      -limitdescendantcount=<n>
+           Do not accept transactions if any ancestor would have <n> or more
+           in-mempool descendants (default: 25)
+
+      -limitdescendantsize=<n>
+           Do not accept transactions if any ancestor would have more than <n>
+           kilobytes of in-mempool descendants (default: 101).
+    ```
+
+
 [chapter consolidation]: #FIXME_not_written_yet
 [coinjoin sudoku]: http://www.coinjoinsudoku.com/
 [coin selection strategies]: #FIXME_not_written_yet
 [fee bumping]: ../1.fee_bumping/fee_bumping.md
+[cronjob]: https://en.wikipedia.org/wiki/Cronjob
+[sendmany]: https://bitcoincore.org/en/doc/0.17.0/rpc/wallet/sendmany/
