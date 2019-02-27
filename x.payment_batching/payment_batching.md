@@ -118,20 +118,12 @@ until you send the batch containing their payment.  Also by delaying
 sending of their payment, you also delay when it's confirmed (all other
 things being equal, such as feerates).
 
-One mitigation for the problem of delayed gratification is to allow the
-user to choose between an immediate payment and a delayed payment, with
+To mitigate the problem of delayed gratification, you may allow the
+user to choose between an immediate payment and a delayed payment with
 a different fee provided for each option.  For example:
 
     [X] Free withdrawal (payment sent within 6 hours)
     [ ] Immediate withdrawal (withdrawal fee 0.123 mBTC)
-
-Another mitigation is to use transaction replacement to append new
-outputs to an existing transaction.  This allows you to send each payment
-immediately, but each replacement must pay a higher feerate than the
-earlier version of the transaction.  This reduces your savings rate
-unless you were planning to fee bump an earlier transaction anyway.
-We'll cover batching and replacement in more detail later in this
-chapter.
 
 ## Reduced privacy
 
@@ -218,79 +210,6 @@ Bitcoin Core nodes (and most other nodes) will refuse to accept or relay
 transactions over 100,000 vbytes, so you should not attempt to send
 batched payments larger than this.
 
-## Combining batching with other opt-in scaling techniques
-
-Payment batching works well with all the techniques described in this
-book, but some combinations are especially notable:
-
-### Changeless transactions
-
-Changeless transactions save 31 to 43 vbytes (for typical transaction
-templates) by closely matching the total value of the inputs and outputs
-in the transaction, plus fees, so that there's no need to return any
-change back to the spender's wallet.  This is also a perfectly efficient
-way to consolidate inputs as you decrease the total number of your
-inputs by making a payment you would've made anyway.
-
-Changeless transactions always decrease overall transaction size, but
-because the efficiency of payment batching comes from spreading the
-fixed costs of the transaction across multiple receivers, the benefit
-of changeless transactions is weakened (in percentage terms) the more
-you are able to batch.  The following plot compares the best-case
-situation from earlier in this chapter, which included a change output,
-to an otherwise-identical changeless transaction.
-
-![Plot of normal best case against a changeless best
-case](img/p2wpkh-batching-changeless.png)
-
-Although the benefit may be small in percentage terms, the cost of
-implementing changeless transactions may also be small.  Your goal is to
-find a single input you own whose value is equal to or slightly larger
-than the total value of the outputs you want to send.  A simple
-algorithm would be to wait until you have a minimum number of payments
-to batch and check to see if you have an input that is equal to or
-slightly larger than that.  If not, wait until you have another payment
-to send, combine that with the earlier payments, and try again.  Keep
-trying until you reach a limit (e.g. it's time to send the oldest
-payment) or the aggregate output value is larger than your largest
-input.
-
-For more information about changeless transactions, including exactly
-what "slightly larger than the output value" means, see the
-corresponding section in the chapter about [coin selection
-strategies][].
-
-### Replace-by-Fee (RBF)
-
-RBF is typically promoted as a strategy for increasing the fees paid in
-a transaction so that it confirms sooner, but it also allows for adding
-outputs to a transaction, making it suitable for adding even more
-payments to a previously-sent transaction.
-
-However, RBF transactions must pay a higher feerate than the original
-transaction.  This means replacing a large batch payment costs more than
-replacing a small independent payment.  Since fee batching benefits more
-from larger transactions, the cost increases of RBF act in direct
-opposition to the fee savings of payment batching.
-
-Looking at the savings rate charts above, we can consider some examples.
-If you sent a single payment and want to turn that into a batch
-containing two payments, you'll expect to save 40% from batching in the
-best case---so paying a fee increase of anything up to 40% can save you
-money overall.  Alternatively, if you already have a batch of ten
-payments and are considering adding an eleventh, the extra savings is
-only about 1%, so it might not be worth it if RBF requires you increase
-the overall feerate of the transaction by more than 1%.
-
-However, there is a time when it's guaranteed to be more efficient to
-add new payments to an existing transaction: when you plan to fee bump
-that existing transaction anyway.  If you sent a payment some time ago
-and are planning to use RBF to increase its fee rate, you should also
-add any additional queued payments to the replacement transaction so
-that they gain from batched efficiency.
-
-For more information about RBF, see the chapter about [fee bumping][].
-
 ## Recommendations summary
 
 1. Try to create systems where your users and customers don't expect
@@ -310,13 +229,6 @@ For more information about RBF, see the chapter about [fee bumping][].
    ensure it has a high probability of confirming within your desired
    time window. For example, use the `CONSERVATIVE` mode of Bitcoin
    Core's `estimatesmartfee` RPC.
-
-5. Optionally, look for opportunities to send the batched payments
-   without a change output.
-
-6. Optionally, when you're already planning to attempt an RBF fee bump,
-   append as many additional queued payments as possible.  (But remember
-   that fee bumps are unreliable.)
 
 ## Footnotes
 

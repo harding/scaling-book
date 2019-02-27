@@ -122,13 +122,3 @@ plot [1:25] savings(unbatched_payments(1, x)/x, p2wpkh_vbytes(1, x+1)/x) ls 1 \
     , savings(unbatched_payments(1, x)/x, (x*(consolidation100/100) + p2wpkh_vbytes(1, x+1))/x) ls 2 \
     , savings(unbatched_payments(10, x)/x, (x*(consolidation100/10) + p2wpkh_vbytes(1, x+1))/x) ls 3 \
 
-########################
-## Changeless savings ##
-########################
-set output './p2wpkh-batching-changeless.png'
-unset label
-set label 1 "Normal best case" at 10,60 textcolor ls 1
-set label 2 "Changeless best case" at 10,84 textcolor ls 4
-
-plot [1:25] savings(unbatched_payments(1, x)/x, p2wpkh_vbytes(1, x+1)/x) ls 1 \
-    , [1:25] savings(unbatched_payments(1, x)/x, p2wpkh_vbytes(1, x)/x) ls 4 \
