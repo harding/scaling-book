@@ -97,12 +97,9 @@ set label 1 "Best case: 1 input, x payments" at 10,82 textcolor ls 1
 #> we can imagine [...] requiring at least 10 inputs for
 #> every output added.
 set label 2 "Unoptimized typical case: x inputs, x payments" at 10,35 textcolor ls 2
-#> for every output they add, they need to add one input on average
-set label 3 "Unoptimized tough case: 10x inputs, x payments" at 10,14 textcolor ls 3
 
 plot [1:25] savings(unbatched_payments(1, x)/x, p2wpkh_vbytes(1, x+1)/x) ls 1 \
     , savings(unbatched_payments(1, x)/x, p2wpkh_vbytes(x, x+1)/x) ls 2 \
-    , savings(unbatched_payments(10, x)/x, p2wpkh_vbytes(x*10, x+1)/x) ls 3 \
 
 ###########################
 ## Consolidation savings ##
@@ -113,12 +110,9 @@ consolidation100 = p2wpkh_vbytes(100, 1)*0.2
 
 set label 1 "Best case" at 20,84 textcolor ls 1
 set label 2 "Optimized typical case" at 10,50 textcolor ls 2
-set label 3 "Optimized tough case" at 2,84 textcolor ls 3
 
 ## 1. best case: we already have large inputs.
 ## 2. one consolidated input pays for 100 payments
-## 3. one consolidated input pays for 10 payments
 plot [1:25] savings(unbatched_payments(1, x)/x, p2wpkh_vbytes(1, x+1)/x) ls 1 \
     , savings(unbatched_payments(1, x)/x, (x*(consolidation100/100) + p2wpkh_vbytes(1, x+1))/x) ls 2 \
-    , savings(unbatched_payments(10, x)/x, (x*(consolidation100/10) + p2wpkh_vbytes(1, x+1))/x) ls 3 \
 

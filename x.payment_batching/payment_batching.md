@@ -1,13 +1,9 @@
 # Payment Batching
 
-It's often possible to add more outputs to a transaction without
-increasing how many inputs it contains, meaning a single transaction can
-increase the number of people it pays faster than it proportionally
-grows in size.  That's scalability, and this chapter describes how
-high-frequency spenders can use this scaling technique of *payment
+This chapter describes how
+high-frequency spenders can use the scaling technique of *payment
 batching* to reduce transaction sizes and fees by about 75% in
 practical situations.
-
 As of February 2019, payment batching is used by multiple popular
 Bitcoin services (mainly exchanges), is available as a built-in feature
 of many wallets (including Bitcoin Core), and should be easy to
@@ -36,17 +32,12 @@ Extrapolating this simple best-case situation, we see that the number of
 vbytes used per receiver asymptotically approaches the size of a single
 output.  This makes the maximum savings possible a bit over 75%.
 
-![Saving rates for best, typical, and tough cases of payment batching](img/p2wpkh-batching-cases-combined.png)
+![Saving rates for best and typical cases of payment batching](img/p2wpkh-batching-cases-combined.png)
 
 Realistically, the more a transaction spends, the more likely it is to
 need additional inputs.  This doesn't prevent payment batching from
 being useful, although it does reduce its effectiveness.  For example,
-we can imagine the tough case of a gambling site that receives bets of
-10 mBTC and pays out winnings of 100 mBTC, requiring at least 10 inputs
-for every output added.  Here, the maximum savings from payment batching
-(without optimizations described later) peak at only about 5%.
-
-Falling between these extremes are a large number of services who
+we expect a typical service to
 receive payments of about the same value as the payments they make, so
 for every output they add, they need to add one input on average.
 Savings in this typical case peak at about 30%.
@@ -63,13 +54,12 @@ efficiency described above.
 If we assume that consolidation transactions will pay only 20% of the
 feerate of a normal transaction and will consolidate 100 inputs at a
 time, we can calculate the savings of using the two-step procedure for
-our 10-to-1 and 1-to-1 scenarios above (while showing, for comparison,
+our one input per output scenario above (while showing, for comparison,
 the simple best-case scenario of already having a large input available).
 
-![Saving rates for best, typical, and tough cases of payment batching after consolidation](img/p2wpkh-batching-after-consolidation.png)
+![Saving rates for best and typical cases of payment batching after consolidation](img/p2wpkh-batching-after-consolidation.png)
 
-Most notably, the savings from consolidation allows the tough case go
-from worst performing to best performing.  For the typical case,
+For the typical case,
 consolidation actually loses money when only making a single payment,
 but when actually batching, it performs almost as well as the best case
 scenario.
@@ -95,17 +85,17 @@ you use a different script type (P2PKH, or multisig using P2SH or
 P2WSH), the number of vbytes used to spend them are even larger, so the
 savings rate will be higher.
 
-## Problems
+## Concerns
 
 The fee-reduction benefits of payment batching do create tradeoffs and
-problems that will need to be addressed by any service using the
+concerns that will need to be addressed by any service using the
 technique.
 
-### Delayed gratification
+### Delays
 
-This is the primary problem with payment batching.  Although some
-situations naturally lend themselves to payment batching (e.g.  sending
-out the company payroll for every employee at the same time), many
+This is the primary concern with payment batching.  Although some
+situations naturally lend themselves to payment batching (e.g. a mining
+pool paying hashrate providers in a block the pool mined), many
 services primarily send money to users when those users make a
 withdrawal request.  In order to batch payments, the service must get
 the user to accept that their payment will not be sent immediately---it
@@ -118,16 +108,16 @@ until you send the batch containing their payment.  Also by delaying
 sending of their payment, you also delay when it's confirmed (all other
 things being equal, such as feerates).
 
-To mitigate the problem of delayed gratification, you may allow the
+To mitigate the problem of delays, you may allow the
 user to choose between an immediate payment and a delayed payment with
 a different fee provided for each option.  For example:
 
     [X] Free withdrawal (payment sent within 6 hours)
     [ ] Immediate withdrawal (withdrawal fee 0.123 mBTC)
 
-## Reduced privacy
+### Reduced privacy
 
-A second problem with payment batching is that it can make users feel
+A second concern with payment batching is that it can make users feel
 like they have less privacy.  Every user you pay in the same transaction
 can reasonably assume that everyone else receiving an output from that
 transaction is being paid by you.  If you had sent separate
@@ -151,9 +141,9 @@ providing significant privacy advantages.  As of February 2019, no
 currently-available coinjoin implementation is fully compatible with the
 needs of payment batching.
 
-## Possible inability to fee bump
+### Possible inability to fee bump
 
-A final problem is that you may not be able to fee bump a batched
+A final concern is that you may not be able to fee bump a batched
 payment.  Transaction relay nodes such as Bitcoin Core impose limits on
 the transactions they relay to prevent attackers from wasting bandwidth,
 CPU, and other node resources.  By yourself, you can easily avoid
@@ -204,7 +194,8 @@ bitcoin-cli sendmany "" '{
 <!-- for max standard tx size: src/policy/policy.h:static const unsigned int MAX_STANDARD_TX_WEIGHT = 400000; -->
 
 If using your own implementation, you are probably already creating
-transactions with two outputs in most cases, so it should be easy to add
+transactions with two outputs in most cases (a payment output and a
+change output), so it should be easy to add
 support for additional outputs.  The only notable consideration is that
 Bitcoin Core nodes (and most other nodes) will refuse to accept or relay
 transactions over 100,000 vbytes, so you should not attempt to send
