@@ -60,7 +60,7 @@ the simple best-case scenario of already having a large input available).
 ![Saving rates for best and typical cases of payment batching after consolidation](img/p2wpkh-batching-after-consolidation.png)
 
 For the typical case,
-consolidation actually loses money when only making a single payment,
+consolidation loses efficiency when only making a single payment,
 but when actually batching, it performs almost as well as the best case
 scenario.
 
@@ -148,7 +148,7 @@ payment.  Transaction relay nodes such as Bitcoin Core impose limits on
 the transactions they relay to prevent attackers from wasting bandwidth,
 CPU, and other node resources.  By yourself, you can easily avoid
 reaching these limits, but the receivers of the payments you send can
-respend that money in child transactions that become part of the
+respend their outputs in child transactions that become part of the
 transaction group containing your transaction.
 
 The closer to a limit a transaction group becomes, the less likely
@@ -167,7 +167,7 @@ only that user is affected.  But if a single receiver of a batched
 payment spends their output to the point where fee bumping becomes
 impossible, all the other receivers of that transaction are also affected.
 
-As of Bitcoin Core 0.18 (April 2019), the limits are[^limits] that a
+As of Bitcoin Core 0.18 (April 2019), the limits are¹ that a
 group of related unconfirmed transactions may not exceed 101,000 vbytes
 in size, have more than 25 unconfirmed ancestors, or have more than 25
 descendants.  This size limit restricts batches to a maximum size of
@@ -223,31 +223,30 @@ batched payments larger than this.
 
 ## Footnotes
 
-[^limits]:
-    Optech believes that almost all nodes are using the default Bitcoin
-    Core policy for transaction group limits.  However, those defaults
-    may change over time, so the example below provides a command that
-    can be used to find the current limits along with the current
-    values.
+¹Optech believes that almost all nodes are using the default Bitcoin
+Core policy for transaction group limits.  However, those defaults
+may change over time, so the example below provides a command that
+can be used to find the current limits along with the current
+values.
 
-    ```bash
-    $ bitcoind -help-debug | grep -A3 -- -limit
-      -limitancestorcount=<n>
-           Do not accept transactions if number of in-mempool ancestors is <n> or
-           more (default: 25)
+```bash
+$ bitcoind -help-debug | grep -A3 -- -limit
+  -limitancestorcount=<n>
+       Do not accept transactions if number of in-mempool ancestors is <n> or
+       more (default: 25)
 
-      -limitancestorsize=<n>
-           Do not accept transactions whose size with all in-mempool ancestors
-           exceeds <n> kilobytes (default: 101)
+  -limitancestorsize=<n>
+       Do not accept transactions whose size with all in-mempool ancestors
+       exceeds <n> kilobytes (default: 101)
 
-      -limitdescendantcount=<n>
-           Do not accept transactions if any ancestor would have <n> or more
-           in-mempool descendants (default: 25)
+  -limitdescendantcount=<n>
+       Do not accept transactions if any ancestor would have <n> or more
+       in-mempool descendants (default: 25)
 
-      -limitdescendantsize=<n>
-           Do not accept transactions if any ancestor would have more than <n>
-           kilobytes of in-mempool descendants (default: 101).
-    ```
+  -limitdescendantsize=<n>
+       Do not accept transactions if any ancestor would have more than <n>
+       kilobytes of in-mempool descendants (default: 101).
+```
 
 
 [chapter consolidation]: #FIXME_not_written_yet
